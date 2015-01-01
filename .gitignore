@@ -3,4 +3,5 @@ node_modules
 /dev
 /test
 *.log
+.oss-sync.json
 
