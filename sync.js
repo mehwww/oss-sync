@@ -16,44 +16,28 @@ function Sync(options) {
   if (!(this instanceof Sync)) {
     return new Sync(options);
   }
-  this.initialized = false;
 
-  this.accessKeyId = options.accessKeyId;
-  this.secretAccessKey = options.secretAccessKey;
-  this.endpoint = options.endpoint;
+  var basePath = process.cwd();
 
-  this.source = path.resolve(options.source);
+  this.source = path.resolve(basePath, options.source);
   this.dest = options.dest[0] == '/'
     ? options.dest.substr(1)
     : options.dest
 
   this.repo = git(path.join(this.source, '.sync'));
   this.oss = oss(options, this.source, this.dest);
-
-  if (fs.existsSync(path.join(this.source, '.sync'))) {
-    this.initialized = true;
-  }
 }
 
 Sync.prototype.init = function (done) {
-  var self = this;
-  var repo = self.repo;
-  if (!self.initialized) {
-    fs.mkdir(path.join(self.source, '.sync'), function (err) {
-      debug('mkdir ".sync" success')
-      if (err) return done(err);
-      repo.init(function (err, commit) {
-        if (!err) {
-          self.initialized = true;
-          done()
-        } else {
-          done(err)
-        }
-      })
-    })
+  var repo = this.repo;
+  var source = this.source;
+
+  if (fs.existsSync(path.join(source, '.sync'))) {
+    rm(path.join(source, '.sync', 'trash'), done)
   } else {
-    rm(path.join(self.source, '.sync', 'trash'), function (err) {
-      done(err)
+    fs.mkdir(path.join(source, '.sync'), function (err) {
+      if (err) return done(err);
+      repo.init(done)
     })
   }
 };
@@ -62,12 +46,15 @@ Sync.prototype.exec = function (done) {
   done = done || new Function();
   var self = this;
   var repo = self.repo;
+  var source = self.source;
+  var oss = self.oss;
+
   async.waterfall([
     function (callback) {
       self.init(callback);
     },
     function (callback) {
-      trash(self.source, callback)
+      trash(source, callback)
     },
     function (callback) {
       repo.add(callback)
@@ -77,15 +64,18 @@ Sync.prototype.exec = function (done) {
     },
     function (status, callback) {
       var queue = parse(status);
+      debug('OSS operation queue:');
       debug(queue);
       async.parallel({
         put: function (cb) {
-          self.oss.putMultiObjects(queue.put, cb)
+          oss.putMultiObjects(queue.put, cb)
         },
         delete: function (cb) {
-          self.oss.deleteMultiObjects(queue.delete, cb)
+          oss.deleteMultiObjects(queue.delete, cb)
         }
       }, function ossResults(err, results) {
+        debug('OSS operation Results:');
+        debug(results);
         callback(err, results)
       })
     },
