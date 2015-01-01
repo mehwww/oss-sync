@@ -9,6 +9,7 @@ var git = require('./lib/git');
 var trash = require('./lib/trash');
 var parse = require('./lib/parse');
 var oss = require('./lib/oss');
+var progressBar = require('./lib/progress');
 
 exports = module.exports = Sync;
 
@@ -26,6 +27,8 @@ function Sync(options) {
 
   this.repo = git(path.join(this.source, '.sync'));
   this.oss = oss(options, this.source, this.dest);
+  this.progressBar = progressBar();
+
 }
 
 Sync.prototype.init = function (done) {
@@ -48,6 +51,7 @@ Sync.prototype.exec = function (done) {
   var repo = self.repo;
   var source = self.source;
   var oss = self.oss;
+  var rollingStick;
 
   async.waterfall([
     function (callback) {
@@ -66,6 +70,9 @@ Sync.prototype.exec = function (done) {
       var queue = parse(status);
       debug('OSS operation queue:');
       debug(queue);
+      rollingStick = setInterval(function () {
+        self.progressBar.tick()
+      }, 100);
       async.parallel({
         put: function (cb) {
           oss.putMultiObjects(queue.put, cb)
@@ -76,6 +83,8 @@ Sync.prototype.exec = function (done) {
       }, function ossResults(err, results) {
         debug('OSS operation Results:');
         debug(results);
+        clearInterval(rollingStick);
+        self.progressBar.terminate()
         callback(err, results)
       })
     },
