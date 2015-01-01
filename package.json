@@ -1,0 +1,25 @@
+{
+  "name": "oss-sync",
+  "version": "0.1.0",
+  "description": "Aliyun OSS sync tool",
+  "main": "sync.js",
+  "author": "mehwww",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/mehwww/oss-sync"
+  },
+  "bin": {
+    "osync": "./bin/osync.js"
+  },
+  "dependencies": {
+    "aliyun-sdk": "^1.1.0",
+    "async": "^0.9.0",
+    "chalk": "^0.5.1",
+    "commander": "^2.6.0",
+    "debug": "^2.1.0",
+    "mime": "^1.2.11",
+    "ncp": "^1.0.1",
+    "rimraf": "^2.2.8"
+  }
+}
