@@ -4,7 +4,7 @@ var path = require('path');
 var program = require('commander');
 var chalk = require('chalk');
 
-var ossSync = require('../sync');
+var ossSync = require('../lib/sync');
 
 program
   .description('Sync Aliyun OSS bucket')
