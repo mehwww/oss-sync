@@ -29,6 +29,7 @@ try {
 
 var sync = ossSync(config);
 
+console.log();
 sync.exec()
   .then(function () {
     console.log();
