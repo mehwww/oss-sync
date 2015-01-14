@@ -1,7 +1,6 @@
 #!/usr/bin/env node
 var path = require('path');
 
-var Promise = require('bluebird');
 var program = require('commander');
 var chalk = require('chalk');
 
@@ -29,20 +28,6 @@ try {
 }
 
 var sync = ossSync(config);
-
-//sync.exec(function (err, msg) {
-//  if (err) {
-//    console.log();
-//    console.log('    ' + chalk.bgRed('Error occurred:'));
-//    console.log();
-//    console.log('    ' + chalk.red(err));
-//    console.log();
-//  } else {
-//    console.log();
-//    console.log('    ' + chalk.cyan('Sync completed'));
-//    console.log();
-//  }
-//})
 
 sync.exec()
   .then(function () {
