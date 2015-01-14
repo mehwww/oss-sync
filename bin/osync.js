@@ -21,24 +21,25 @@ var configFile = program.args[0] || '.oss-sync.json';
 try {
   var config = require(path.resolve(process.cwd(), configFile))
 } catch (e) {
-  console.log('');
+  console.log();
   console.log(chalk.red('    Failed to load config file'));
-  console.log('');
+  console.log();
   process.exit();
 }
 
 var sync = ossSync(config);
 
-sync.exec(function (err, msg) {
-  if (err) {
-    console.log('');
-    console.log('    ' + chalk.bgRed('Error occurred:'));
-    console.log('');
-    console.log('    ' + chalk.red(err));
-    console.log('');
-  } else {
-    console.log('');
+console.log();
+sync.exec()
+  .then(function () {
+    console.log();
     console.log('    ' + chalk.cyan('Sync completed'));
-    console.log('');
-  }
-})
+    console.log();
+  })
+  .catch(function (err) {
+    console.log();
+    console.log('    ' + chalk.bgRed('Error occurred:'));
+    console.log();
+    console.log('    ' + chalk.red(err));
+    console.log();
+  })
