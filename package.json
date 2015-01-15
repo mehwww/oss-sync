@@ -1,6 +1,6 @@
 {
   "name": "oss-sync",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Aliyun OSS sync tool",
   "main": "index.js",
   "author": "mehwww",
