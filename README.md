@@ -22,6 +22,7 @@ oss-sync 会自动检测当前工作目录下是否存在`.oss-sync.json`并将�
 * `secretAccessKey` - 你的 OSS secretAccessKey
 * `endpoint` -  OSS 实例所在地区
 * `bucket` - bucket 名
+* `cacheControl` - 资源文件 Cache-Control 信息
 * `incrementalMode` - 是否使用增量模式，在增量模式的情况下 oss-sync 将只会上传那些新增和修改过的文件
 
 ![](http://i3.tietuku.com/5b5382997207e435.png)
