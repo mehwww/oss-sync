@@ -47,5 +47,5 @@ describe('oss-sync', () => {
       .then(() => {
         expect(path.join(tmpDir, repo, '.sync')).to.be.a.directory('oss-sync not initialized correctly')
       })
-  });
+  })
 })
