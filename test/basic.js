@@ -1,51 +1,59 @@
-'use strict';
+'use strict'
 
 const Promise = require('bluebird')
 const exec = Promise.promisify(require('child_process').exec)
-const fs = Promise.promisifyAll(require('fs'))
 const path = require('path')
 
 const chai = require('chai').use(require('chai-fs'))
 const expect = chai.expect
 
-const ossSync = require('../')
+const Sync = require('../')
 
 const tmpDir = require('os').tmpdir()
-const repo = 'oss-sync'
-const repoUrl = 'https://github.com/mehwww/oss-sync'
+// const repo = 'oss-sync'
+// const repoUrl = 'https://github.com/mehwww/oss-sync'
 
 const syncOptions = require('./.oss-sync.json')
-const repoPath = path.join(tmpDir, repo)
+const repoPath = path.resolve('./fixtures')
+// const repoPath = path.join(tmpDir, repo)
 
-before('Git clone a repo', function () {
-  this.timeout(90000)
+// before('Git clone a repo', function () {
+//   this.timeout(90000)
+//
+//   return exec(`rm -rf ${repo}`, {cwd: tmpDir})
+//     .then(() => {
+//       console.log('Cloning a repoistry...')
+//       return exec(`git clone --depth=1 --branch=master ${repoUrl} && rm -rf ${repo}/.git`, {cwd: tmpDir})
+//         .then((result) => { console.log('Complete.\n') })
+//     })
+// })
 
-  return exec(`rm -rf ${repo}`, {cwd: tmpDir})
-    .then(() => {
-      console.log('Cloning a repoistry...')
-      return exec(`git clone --depth=1 --branch=master ${repoUrl} && rm -rf ${repo}/.git`, {cwd: tmpDir})
-        .then((result) => { console.log('Complete.\n') })
-    })
+before('Clean', function () {
+  return exec('rm -rf .sync', {cwd: repoPath})
 })
 
-describe('oss-sync', () => {
+describe('oss-sync', function () {
   let options = {}
   let sync
 
   before(function () {
     options = Object.assign(options, syncOptions, {
       source: repoPath,
-      dest: repo
+      dest: ''
     })
 
-    sync = ossSync(options)
+    sync = new Sync(options)
   })
 
   it('should initialize correctly', function () {
-    this.timeout(60000)
+    this.timeout(20 * 60 * 1000)
     return sync.exec()
       .then(() => {
-        expect(path.join(tmpDir, repo, '.sync')).to.be.a.directory('oss-sync not initialized correctly')
+        expect(path.join(repoPath, '.sync')).to.be.a.directory('oss-sync not initialized correctly')
       })
   })
+})
+
+before('Clean', function () {
+  return exec('rm -rf .sync', {cwd: repoPath})
 })
