@@ -1,6 +1,6 @@
 {
   "name": "oss-sync",
-  "version": "0.4.2",
+  "version": "0.5.0",
   "description": "Aliyun OSS sync tool",
   "main": "index.js",
   "author": "mehwww",
@@ -11,6 +11,14 @@
   },
   "bin": {
     "osync": "./bin/osync.js"
+  },
+  "files": [
+    "lib",
+    "bin",
+    "index.js"
+  ],
+  "engines": {
+    "node": ">=4.0.0"
   },
   "dependencies": {
     "aliyun-sdk": "^1.8.2",
