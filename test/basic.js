@@ -6,7 +6,7 @@ const Promise = require('bluebird')
 const path = require('path')
 const url = require('url')
 
-const chai = require('chai').use(require('chai-fs'))
+const chai = require('chai').use(require('chai-fs')).use(require('chai-datetime'))
 const expect = chai.expect
 
 const Sync = require('../')
@@ -16,15 +16,15 @@ const repoPath = path.resolve('./fixtures/basic')
 const host = `http://${syncOptions.bucket}.${url.parse(syncOptions.endpoint).hostname}`
 
 describe('oss-sync', function () {
+  before('Clean', function () {
+    this.timeout(60 * 1000)
+    return exec('rm -rf .sync').then(() => clearBucket())
+  })
   const options = Object.assign({}, syncOptions, {
     source: repoPath,
     dest: ''
   })
   const sync = new Sync(options)
-
-  before('Clean', function () {
-    return exec('rm -rf .sync').then(() => clearBucket())
-  })
 
   it('should initialize correctly', function () {
     this.timeout(20 * 60 * 1000)
@@ -58,25 +58,26 @@ describe('oss-sync', function () {
           expect(ossHash).to.equal(fileHash)
         })
       })
-      .then(() => exec(`mv ${target} ${origin}`))
       .then(() => {
         return exec(`curl -s -o /dev/null -w \"%{http_code}\" "${url.resolve(host, origin)}"`).then((status) => {
           expect(String(status)).to.equal('404')
         })
       })
+      .finally(() => exec(`mv ${target} ${origin}`))
   })
 })
 
 describe('oss-sync incremental mode', function () {
-  let options = Object.assign({}, syncOptions, {
-    source: repoPath,
-    dest: ''
-  })
-  let sync = new Sync(options)
-
   before('Clean', function () {
+    this.timeout(60 * 1000)
     return exec('rm -rf .sync').then(() => clearBucket())
   })
+  let options = Object.assign({}, syncOptions, {
+    source: repoPath,
+    dest: '',
+    incrementalMode: true
+  })
+  let sync = new Sync(options)
 
   it('should not delete the rename file in incremental mode', function () {
     this.timeout(20 * 60 * 1000)
@@ -100,7 +101,53 @@ describe('oss-sync incremental mode', function () {
   })
 })
 
+describe('oss-sync custom http header', function () {
+  before('Clean', function () {
+    this.timeout(60 * 1000)
+    return exec('rm -rf .sync').then(() => clearBucket())
+  })
+  let options = Object.assign({}, syncOptions, {
+    source: repoPath,
+    dest: '',
+    headers: {
+      'CacheControl': 'no-cache',
+      'ContentDisposition': 'attachment; filename="oss-sync test"',
+      'ContentEncoding': 'gzip',
+      'ContentLanguage': 'zh-cn',
+      'Expires': new Date(2222, 1, 1),
+      'Metadata': {
+        'TomoeMami': 'Swallowed'
+      }
+    }
+  })
+  let sync = new Sync(options)
+
+  it('should upload with correct http header setting', function () {
+    this.timeout(20 * 60 * 1000)
+
+    const file = 'a-big-image.png'
+
+    return sync.exec()
+      .then(() => exec(`curl -I "${url.resolve(host, file)}"`))
+      .then((result) => result.trim().split('\r\n').slice(1))
+      .reduce((headers, line) => {
+        line = line.split(': ')
+        headers[line[0]] = line[1]
+        return headers
+      }, {})
+      .then((headers) => {
+        expect(headers['Cache-Control']).to.equal('no-cache')
+        expect(headers['Content-Disposition']).to.equal('attachment; filename="oss-sync test"')
+        expect(headers['Content-Encoding']).to.equal('gzip')
+        expect(headers['Content-Language']).to.equal('zh-cn')
+        expect(new Date(headers['Expires'])).to.equalTime(new Date(2222, 1, 1))
+        expect(headers['x-oss-meta-tomoemami']).to.equal('Swallowed')
+      })
+  })
+})
+
 after(function () {
+  this.timeout(60 * 1000)
   return exec('rm -rf .sync').then(() => clearBucket())
 })
 
