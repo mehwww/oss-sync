@@ -1,6 +1,6 @@
 {
   "name": "oss-sync",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "description": "Aliyun OSS sync tool",
   "main": "index.js",
   "author": "mehwww",
@@ -8,6 +8,9 @@
   "repository": {
     "type": "git",
     "url": "git://github.com/mehwww/oss-sync"
+  },
+  "scripts": {
+    "test": "mocha"
   },
   "bin": {
     "osync": "./bin/osync.js"

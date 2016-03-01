@@ -12,7 +12,7 @@ const expect = chai.expect
 const Sync = require('../')
 
 const syncOptions = require('./.oss-sync.json')
-const repoPath = path.resolve('./fixtures/basic')
+const repoPath = path.resolve(__dirname, './fixtures/basic')
 const host = `http://${syncOptions.bucket}.${url.parse(syncOptions.endpoint).hostname}`
 
 describe('oss-sync', function () {
