@@ -15,21 +15,15 @@ const syncOptions = require('./.oss-sync.json')
 const repoPath = path.resolve('./fixtures/basic')
 const host = `http://${syncOptions.bucket}.${url.parse(syncOptions.endpoint).hostname}`
 
-before('Clean', function () {
-  return exec('rm -rf .sync')
-})
-
 describe('oss-sync', function () {
-  let options = {}
-  let sync
+  const options = Object.assign({}, syncOptions, {
+    source: repoPath,
+    dest: ''
+  })
+  const sync = new Sync(options)
 
-  before(function () {
-    options = Object.assign(options, syncOptions, {
-      source: repoPath,
-      dest: ''
-    })
-
-    sync = new Sync(options)
+  before('Clean', function () {
+    return exec('rm -rf .sync').then(() => clearBucket())
   })
 
   it('should initialize correctly', function () {
@@ -73,8 +67,41 @@ describe('oss-sync', function () {
   })
 })
 
-after('Clean', function () {
-  return exec('rm -rf .sync', {cwd: repoPath})
+describe('oss-sync incremental mode', function () {
+  let options = Object.assign({}, syncOptions, {
+    source: repoPath,
+    dest: ''
+  })
+  let sync = new Sync(options)
+
+  before('Clean', function () {
+    return exec('rm -rf .sync').then(() => clearBucket())
+  })
+
+  it('should not delete the rename file in incremental mode', function () {
+    this.timeout(20 * 60 * 1000)
+    const origin = 'a-big-image.png'
+    const target = 'another-big-image.png'
+
+    return sync.exec()
+      .then(() => exec(`mv ${origin} ${target}`))
+      .then(() => sync.exec())
+      .then(() => {
+        return hashBoth(target).spread((ossHash, fileHash) => {
+          expect(ossHash).to.equal(fileHash)
+        })
+      })
+      .then(() => {
+        return hashBoth(target, origin).spread((ossHash, fileHash) => {
+          expect(ossHash).to.equal(fileHash)
+        })
+      })
+      .finally(() => exec(`mv ${target} ${origin}`))
+  })
+})
+
+after(function () {
+  return exec('rm -rf .sync').then(() => clearBucket())
 })
 
 function exec (command) {
@@ -86,4 +113,45 @@ function hashBoth (file) {
     exec(`curl -s "${url.resolve(host, file)}" | md5 -q`),
     exec(`md5 -q "${path.resolve(repoPath, file)}"`)
   ])
+}
+
+function clearBucket () {
+  const SDK = require('aliyun-sdk')
+  const oss = new SDK.OSS({
+    accessKeyId: syncOptions.accessKeyId,
+    secretAccessKey: syncOptions.secretAccessKey,
+    endpoint: syncOptions.endpoint,
+    apiVersion: syncOptions.apiVersion || '2013-10-15'
+  })
+
+  return getAllObjects()
+    .then((list) => deleteObjects(list))
+
+  function getAllObjects () {
+    return new Promise((resolve, reject) => {
+      oss.listObjects({
+        Bucket: syncOptions.bucket
+      }, (err, data) => {
+        if (err) return reject(err)
+        resolve(data.Contents.map((object) => object.Key))
+      })
+    })
+  }
+
+  function deleteObjects (list) {
+    if (list.length === 0) return Promise.resolve()
+
+    return new Promise((resolve, reject) => {
+      oss.deleteObjects({
+        Bucket: syncOptions.bucket,
+        Delete: {
+          Objects: list.map((key) => ({Key: key})),
+          Quiet: true
+        }
+      }, (err, result) => {
+        if (err) return reject(err)
+        resolve(result)
+      })
+    })
+  }
 }
