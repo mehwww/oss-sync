@@ -1,12 +1,12 @@
-##oss-sync
+## oss-sync
 [阿里云OSS](http://www.aliyun.com/product/oss) 同步工具
 
-###Install
+### Install
 ```bash
 npm i oss-sync -g
 ```
 
-###How to use
+### How to use
 ```bash
 $ osync <config json file>
 $
@@ -27,7 +27,7 @@ oss-sync 会自动检测当前工作目录下是否存在`.oss-sync.json`并将�
 
 ![](http://i3.tietuku.com/5b5382997207e435.png)
 
-###Tips
+### Tips
 * oss-sync 通过使用 [git](http://git-scm.com/) 管理文件树生成的 md5 值来检测文件的变化，会在同步的目录下生成一个`.sync`的文件夹
 * oss-sync 会忽略所有以`.`开头的文件和文件夹
 * 文件名中若有奇怪的字符可能导致奇怪的后果
